@@ -1,29 +1,17 @@
 # XenoEvolve Omics
 
-A React + TypeScript scientific workbench for inspecting xenobiotic transformation hypotheses and evidence returned by a FastAPI service. The UI is prepared for the REST contract in the project brief; this repository does not include or claim a running scientific backend.
+A scientific workbench for exploring how xenobiotic chemicals may be transformed biologically. Enter a chemical name or SMILES; the FastAPI backend resolves the structure (PubChem, RDKit), predicts bond transformations with a Random Forest model, generates hypothetical cleavage products and attaches KEGG/NCBI context. The React frontend presents these next to optional LC-MS/MS and time-course evidence.
 
-## Run locally
+- **Frontend:** React 18, TypeScript, Vite, React Router, Recharts
+- **Backend:** FastAPI, RDKit, scikit-learn, requests
 
-Requirements: Node.js 22 and pnpm 11.
+Full documentation (pipeline, API reference, model results, limitations) is in [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md), also available as `docs/XenoEvolve_Documentation.docx`.
 
-```bash
-pnpm install
-pnpm dev
-```
+## Quick start
 
-For a production bundle, run `pnpm build`. `pnpm typecheck` runs strict TypeScript diagnostics.
+Requirements: Node.js 22, pnpm 11 and Python 3. The backend needs internet access for PubChem, KEGG and NCBI.
 
-## Backend configuration
-
-The browser API base defaults to `/api`. Set the non-secret `VITE_API_BASE_URL` build-time variable or change it in **Settings** to target the deployed FastAPI service. The client uses the configured service for analysis, evidence, omics, LC-MS/MS uploads, temporal analysis, KEGG/NCBI context, benchmarking, history and reports. Configure external-service credentials only on the backend—never in `VITE_*` variables or browser storage.
-
-Expected endpoints are documented in `src/services/api.ts`. A successful backend health response is required before the UI reports the backend connected; individual service availability is shown only when explicitly returned by health data.
-
-## Scientific status and example data
-
-No local predictor or service-response fallback is used. Backend results remain backend-reported; unavailable analytical, omics, temporal, KEGG, NCBI and benchmark evidence is shown as unavailable. Optional examples use only explicitly supplied brief values and are marked **DEMO DATA**; they are not measured results or validation. Candidate pathways are hypotheses unless suitable experimental/reference-standard evidence is returned.
-
-## Run the backend
+**1. Backend** (http://127.0.0.1:8001)
 
 ```bash
 cd backend
@@ -32,4 +20,43 @@ pip install -r requirements.txt
 uvicorn main:app --port 8001
 ```
 
-The frontend defaults to `http://127.0.0.1:8001` (change it in **Settings**). Besides `/analyze`, `/benchmark/run`, `/ablation/run`, KEGG and NCBI, the backend serves `/analysis/history`, `/temporal/analyze`, `/msms/analyze` (mzML, mzXML, MGF, MSP, CSV/TXT) and `/report/generate` (PDF). Analyses are kept in `backend/data/` (git-ignored).
+**2. Frontend** (http://localhost:3000)
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open the app, go to **Analyze Chemical** and run a compound such as `aspirin`. The header shows "Backend connected" when the frontend can reach the API.
+
+Other scripts: `pnpm build` (type-check and production bundle), `pnpm typecheck` (strict TypeScript only).
+
+## Configuration
+
+The frontend picks the API base URL in this order: the value saved in **Settings**, the `VITE_API_BASE_URL` build-time variable, then the default `http://127.0.0.1:8001`. `.env.example` sets `/api`, which only works behind a reverse proxy that forwards `/api` to the backend. Configure external-service credentials only on the backend; never in `VITE_*` variables or browser storage.
+
+## Backend endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /health` | Model, RDKit and PubChem/KEGG/NCBI status |
+| `POST /analyze` | Full analysis pipeline |
+| `POST /transformations/predict` | Bond-level predictions only |
+| `GET /pubchem/{name}`, `/kegg/context/{id}`, `/ncbi/context/{query}` | Database lookups |
+| `POST /benchmark/run`, `/ablation/run` | Stored model evaluation results |
+| `GET /analysis/history`, `/analysis/{id}` | Saved analyses (kept in `backend/data/`, git-ignored) |
+| `POST /temporal/analyze` | Time-course evidence from supplied observations |
+| `POST /msms/analyze` | LC-MS/MS upload (mzML, mzXML, MGF, MSP, CSV/TXT, up to 50 MB) |
+| `POST /report/generate`, `GET /report/download/{id}` | PDF report |
+
+Interactive API docs are served at `/docs`. The frontend's client is in `src/services/api.ts`.
+
+## Machine-learning model
+
+A Random Forest classifier predicts, per bond, whether it is transformed (18 atom and bond features, trained on 30,000 reactions). On the held-out test set it scores accuracy 0.878 and ROC-AUC 0.923. To retrain or re-evaluate, run the scripts in `backend/ml/`; see the documentation for the order.
+
+## Scientific status
+
+All outputs are computational hypotheses unless confirmed experimentally. RDKit validation checks that a product structure is valid, not that the reaction occurs in biology. No fallback values are invented: evidence that is unavailable (omics, LC-MS/MS, temporal, KEGG, NCBI, benchmarks) is shown as unavailable, and no overall evidence score is computed from missing components. Optional examples use only explicitly supplied sample values and are marked **DEMO DATA**; they are not measured results.
+
+Old copies of source files (`*_backup.py`, `*.backup`, `*.before_validation_update`, `models_backup.ts`, `AnalyzeChemical_old.txt`) are kept for reference and are not used.
