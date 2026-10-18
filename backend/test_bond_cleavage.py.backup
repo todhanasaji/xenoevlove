@@ -1,0 +1,25 @@
+
+from rdkit import Chem
+
+smiles = "CC(=O)OC1=CC=CC=C1C(=O)O"
+mol = Chem.MolFromSmiles(smiles)
+
+print("Original molecule:", Chem.MolToSmiles(mol))
+print("\nTesting removal of each bond:")
+
+for bond in mol.GetBonds():
+    editable = Chem.RWMol(mol)
+    editable.RemoveBond(
+        bond.GetBeginAtomIdx(),
+        bond.GetEndAtomIdx()
+    )
+    candidate = editable.GetMol()
+
+    try:
+        Chem.SanitizeMol(candidate)
+        print(f"Bond {bond.GetIdx()} ({bond.GetBondType()}): OK")
+    except Exception as error:
+        print(
+            f"Bond {bond.GetIdx()} ({bond.GetBondType()}): "
+            f"FAILED - {error}"
+        )

@@ -1,0 +1,171 @@
+
+# ============================================================
+# XenoEvolve Omics
+# Stage 7 — Candidate Product Generation and Validation
+# ============================================================
+
+from rdkit import Chem
+
+
+def generate_cleavage_products(smiles, predictions, max_candidates=5):
+    """
+    Generate hypothetical bond-cleavage fragments from ML-ranked bonds.
+
+    Conservative filtering:
+    - Skip aromatic bonds.
+    - Skip bonds that belong to a ring.
+    - Validate each generated molecular structure with RDKit.
+
+    These are computational candidates only. Bond removal is not a
+    complete reaction mechanism and does not establish chemical
+    plausibility or experimental product formation.
+    """
+
+    if not isinstance(smiles, str) or not smiles.strip():
+        raise ValueError("SMILES is required")
+
+    mol = Chem.MolFromSmiles(smiles)
+
+    if mol is None:
+        raise ValueError("Invalid SMILES structure")
+
+    if not predictions:
+        return []
+
+    if not isinstance(max_candidates, int) or isinstance(max_candidates, bool):
+        raise ValueError("max_candidates must be an integer")
+
+    if max_candidates < 1:
+        return []
+
+    # Rank predicted bonds by transformation probability.
+    ranked_predictions = sorted(
+        predictions,
+        key=lambda item: _safe_probability(item),
+        reverse=True,
+    )
+
+    products = []
+    seen_bonds = set()
+    skipped_bonds = []
+
+    for prediction in ranked_predictions:
+        if len(products) >= max_candidates:
+            break
+
+        if not isinstance(prediction, dict):
+            continue
+
+        try:
+            bond_index = int(prediction["bond_index"])
+            probability = float(
+                prediction.get("transformation_probability", 0.0)
+            )
+        except (KeyError, TypeError, ValueError, OverflowError):
+            continue
+
+        if not 0.0 <= probability <= 1.0:
+            continue
+
+        if bond_index < 0 or bond_index >= mol.GetNumBonds():
+            continue
+
+        if bond_index in seen_bonds:
+            continue
+
+        seen_bonds.add(bond_index)
+        original_bond = mol.GetBondWithIdx(bond_index)
+
+        # Conservative filter: do not break aromatic systems or rings.
+        if original_bond.GetIsAromatic() or original_bond.IsInRing():
+            skipped_bonds.append({
+                "bond_index": bond_index,
+                "bond_type": str(original_bond.GetBondType()),
+                "reason": (
+                    "Aromatic bond or ring bond excluded by "
+                    "conservative candidate-generation filter"
+                ),
+            })
+            continue
+
+        atom1 = original_bond.GetBeginAtomIdx()
+        atom2 = original_bond.GetEndAtomIdx()
+
+        atom1_symbol = mol.GetAtomWithIdx(atom1).GetSymbol()
+        atom2_symbol = mol.GetAtomWithIdx(atom2).GetSymbol()
+        bond_type = str(original_bond.GetBondType())
+
+        # Remove one eligible bond from a copy of the source molecule.
+        editable = Chem.RWMol(mol)
+        editable.RemoveBond(atom1, atom2)
+        candidate_mol = editable.GetMol()
+
+        # Validate the resulting molecular graph.
+        try:
+            Chem.SanitizeMol(candidate_mol)
+
+            fragments = Chem.GetMolFrags(
+                candidate_mol,
+                asMols=True,
+                sanitizeFrags=True,
+            )
+
+            fragment_smiles = [
+                Chem.MolToSmiles(fragment, canonical=True)
+                for fragment in fragments
+            ]
+
+            validation = {
+                "rdkit_valid": True,
+                "sanitized": True,
+                "chemical_plausibility_assessed": False,
+                "validation_error": None,
+            }
+
+        except Exception as exc:
+            validation = {
+                "rdkit_valid": False,
+                "sanitized": False,
+                "chemical_plausibility_assessed": False,
+                "validation_error": str(exc),
+            }
+            fragment_smiles = []
+
+        products.append({
+            "id": f"product-{len(products) + 1}",
+            "candidate_type": "HYPOTHETICAL_BOND_CLEAVAGE",
+            "source_smiles": smiles,
+            "product_smiles": fragment_smiles,
+            "fragment_count": len(fragment_smiles),
+            "cleaved_bond_index": bond_index,
+            "atom1_index": atom1,
+            "atom2_index": atom2,
+            "atom1_element": atom1_symbol,
+            "atom2_element": atom2_symbol,
+            "bond_type": bond_type,
+            "predicted_probability": round(probability, 4),
+            "validation": validation,
+            "confidence": prediction.get("confidence", "UNKNOWN"),
+            "evidence_status": "COMPUTATIONAL_CANDIDATE",
+            "experimental_validation_required": True,
+        })
+
+    return products
+
+
+def _safe_probability(prediction):
+    """Return a sortable probability, using zero for invalid input."""
+    if not isinstance(prediction, dict):
+        return 0.0
+
+    try:
+        probability = float(
+            prediction.get("transformation_probability", 0.0)
+        )
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+
+    if not 0.0 <= probability <= 1.0:
+        return 0.0
+
+    return probability

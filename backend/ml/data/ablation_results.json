@@ -1,0 +1,146 @@
+{
+  "status": "completed",
+  "evaluation_level": "bond",
+  "training_file": "ml/data/raw/raw_train.csv",
+  "test_file": "ml/data/raw/raw_test.csv",
+  "training_reactions": 40008,
+  "training_reactions_skipped": 0,
+  "test_reactions": 5007,
+  "test_reactions_skipped": 0,
+  "training_bond_samples": 422174,
+  "test_bond_samples": 53011,
+  "threshold": 0.5,
+  "random_state": 42,
+  "experiments": {
+    "full_model": {
+      "features_used": [
+        "atom_a_atomic_number",
+        "atom_a_degree",
+        "atom_a_total_degree",
+        "atom_a_hydrogens",
+        "atom_a_formal_charge",
+        "atom_a_aromatic",
+        "atom_a_ring",
+        "atom_b_atomic_number",
+        "atom_b_degree",
+        "atom_b_total_degree",
+        "atom_b_hydrogens",
+        "atom_b_formal_charge",
+        "atom_b_aromatic",
+        "atom_b_ring",
+        "bond_type",
+        "bond_aromatic",
+        "bond_ring",
+        "bond_conjugated"
+      ],
+      "feature_count": 18,
+      "accuracy": 0.8781573635660523,
+      "precision": 0.742737971100849,
+      "recall": 0.7684364645141404,
+      "f1_score": 0.7553687081013521,
+      "roc_auc": 0.9233517272820991,
+      "confusion_matrix": [
+        [
+          36580,
+          3454
+        ],
+        [
+          3005,
+          9972
+        ]
+      ]
+    },
+    "without_atom_descriptors": {
+      "features_used": [
+        "bond_type",
+        "bond_aromatic",
+        "bond_ring",
+        "bond_conjugated"
+      ],
+      "feature_count": 4,
+      "accuracy": 0.6525815396804436,
+      "precision": 0.3973429951690821,
+      "recall": 0.811281498034985,
+      "f1_score": 0.5334279127504876,
+      "roc_auc": 0.7298967652558899,
+      "confusion_matrix": [
+        [
+          24066,
+          15968
+        ],
+        [
+          2449,
+          10528
+        ]
+      ]
+    },
+    "without_bond_descriptors": {
+      "features_used": [
+        "atom_a_atomic_number",
+        "atom_a_degree",
+        "atom_a_total_degree",
+        "atom_a_hydrogens",
+        "atom_a_formal_charge",
+        "atom_a_aromatic",
+        "atom_a_ring",
+        "atom_b_atomic_number",
+        "atom_b_degree",
+        "atom_b_total_degree",
+        "atom_b_hydrogens",
+        "atom_b_formal_charge",
+        "atom_b_aromatic",
+        "atom_b_ring"
+      ],
+      "feature_count": 14,
+      "accuracy": 0.8760068664994057,
+      "precision": 0.735718492343934,
+      "recall": 0.7701317715959004,
+      "f1_score": 0.7525319076841986,
+      "roc_auc": 0.9227390593313554,
+      "confusion_matrix": [
+        [
+          36444,
+          3590
+        ],
+        [
+          2983,
+          9994
+        ]
+      ]
+    },
+    "without_aromaticity_and_ring_flags": {
+      "features_used": [
+        "atom_a_atomic_number",
+        "atom_a_degree",
+        "atom_a_total_degree",
+        "atom_a_hydrogens",
+        "atom_a_formal_charge",
+        "atom_b_atomic_number",
+        "atom_b_degree",
+        "atom_b_total_degree",
+        "atom_b_hydrogens",
+        "atom_b_formal_charge",
+        "bond_type",
+        "bond_conjugated"
+      ],
+      "feature_count": 12,
+      "accuracy": 0.8630095640527438,
+      "precision": 0.710528254623149,
+      "recall": 0.7431609771133544,
+      "f1_score": 0.7264783427495292,
+      "roc_auc": 0.9061425899259421,
+      "confusion_matrix": [
+        [
+          36105,
+          3929
+        ],
+        [
+          3333,
+          9644
+        ]
+      ]
+    }
+  },
+  "limitations": "Feature-group ablation of the bond classifier, not ablation of Omics, Temporal, MS/MS, or Literature evidence modules. Reaction labels are derived from atom-mapped reactant/product bond changes. Metrics do not establish experimental validity.",
+  "generated_at_utc": "2026-10-18T11:04:08.858774+00:00"
+}

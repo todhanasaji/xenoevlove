@@ -1,0 +1,96 @@
+import { useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  ArrowRight,
+  Beaker,
+  Check,
+  ChevronDown,
+  CircleAlert,
+  CircleHelp,
+  Clock3,
+  FlaskConical,
+  LoaderCircle,
+  RotateCcw,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+
+import { api, ApiError } from '../services/api';
+import {
+  calculateXes,
+  getEvidenceWeights,
+  PIPELINE_STEPS,
+  type AnalysisResult,
+  type PipelineStep,
+  type TransformationCandidate,
+} from '../models';
+
+import { useWorkspace } from '../state/Workspace';
+
+import {
+  Badge,
+  ConfidenceBadge,
+  DemoNotice,
+  EmptyState,
+  PageHeading,
+  Panel,
+  StatusNote,
+} from '../components/ui';
+
+
+export function AnalyzeChemical() {
+  const {
+    analysis,
+    demoMode,
+    setAnalysis,
+    setDemoMode,
+    notify,
+    health,
+  } = useWorkspace();
+
+  const [inputType, setInputType] =
+    useState<'name' | 'smiles'>('name');
+
+  const [value, setValue] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const [pipeline, setPipeline] = useState<PipelineStep[]>(
+    PIPELINE_STEPS.map((name) => ({
+      name,
+      status: 'pending',
+    }))
+  );
+
+  const [backendPipelineNote, setBackendPipelineNote] =
+    useState(
+      'Per-stage progress is shown only when returned by the FastAPI backend.'
+    );
+
+  const [selectedCandidate, setSelectedCandidate] =
+    useState<TransformationCandidate | null>(null);
+
+  const [showProfile, setShowProfile] = useState(false);
+
+  const requestController =
+    useRef<AbortController | null>(null);
+
+  const navigate = useNavigate();
+
+  const candidates = useMemo(
+    () => analysis?.transformations ?? [],
+    [analysis]
+  );
+
+
+  // ============================================================
+  // LOAD EXAMPLE
+  // ============================================================

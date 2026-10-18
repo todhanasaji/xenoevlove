@@ -1,0 +1,54 @@
+{
+  "status": "completed",
+  "evaluation_level": "bond",
+  "test_file": "ml/data/raw/raw_test.csv",
+  "test_reactions": 5007,
+  "reactions_skipped": 0,
+  "bond_samples_evaluated": 53011,
+  "positive_labels": 12977,
+  "negative_labels": 40034,
+  "accuracy": 0.8776480353134255,
+  "precision": 0.7410681126049172,
+  "recall": 0.7688217615781767,
+  "f1_score": 0.7546898638426627,
+  "roc_auc": 0.9232251857709497,
+  "confusion_matrix": [
+    [
+      36548,
+      3486
+    ],
+    [
+      3000,
+      9977
+    ]
+  ],
+  "classification_report": {
+    "0": {
+      "precision": 0.9241428137958936,
+      "recall": 0.9129240145876005,
+      "f1-score": 0.9184991581010782,
+      "support": 40034.0
+    },
+    "1": {
+      "precision": 0.7410681126049172,
+      "recall": 0.7688217615781767,
+      "f1-score": 0.7546898638426627,
+      "support": 12977.0
+    },
+    "accuracy": 0.8776480353134255,
+    "macro avg": {
+      "precision": 0.8326054632004054,
+      "recall": 0.8408728880828886,
+      "f1-score": 0.8365945109718704,
+      "support": 53011.0
+    },
+    "weighted avg": {
+      "precision": 0.8793264474312656,
+      "recall": 0.8776480353134255,
+      "f1-score": 0.8783989296279036,
+      "support": 53011.0
+    }
+  },
+  "generated_at_utc": "2026-10-18T11:02:23.796365+00:00",
+  "limitations": "Bond-level held-out evaluation. These metrics do not establish biological or experimental validity."
+}
