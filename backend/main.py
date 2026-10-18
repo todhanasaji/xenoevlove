@@ -22,6 +22,7 @@ from rdkit.Chem import Descriptors, Lipinski, Crippen, rdMolDescriptors
 
 from ml.features import molecule_to_bonds
 from product_generation import generate_cleavage_products
+from extra_routes import router as extra_router, store_analysis
 
 
 # ============================================================
@@ -33,6 +34,9 @@ app = FastAPI(
     description="Computational Xenobiotic Enzyme Matrix Pipeline",
     version="5.1.0",
 )
+
+
+app.include_router(extra_router)
 
 
 # ============================================================
@@ -1270,7 +1274,7 @@ def analyze(request: AnalyzeRequest):
     # FINAL RESPONSE
     # --------------------------------------------------------
 
-    return {
+    result = {
         "success": True,
         "id": f"analysis-{uuid.uuid4().hex[:12]}",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -1355,6 +1359,10 @@ def analyze(request: AnalyzeRequest):
             "biological interpretation.",
         ],
     }
+
+    store_analysis(result)
+
+    return result
 
 
 # ============================================================

@@ -22,3 +22,14 @@ Expected endpoints are documented in `src/services/api.ts`. A successful backend
 ## Scientific status and example data
 
 No local predictor or service-response fallback is used. Backend results remain backend-reported; unavailable analytical, omics, temporal, KEGG, NCBI and benchmark evidence is shown as unavailable. Optional examples use only explicitly supplied brief values and are marked **DEMO DATA**; they are not measured results or validation. Candidate pathways are hypotheses unless suitable experimental/reference-standard evidence is returned.
+
+## Run the backend
+
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --port 8001
+```
+
+The frontend defaults to `http://127.0.0.1:8001` (change it in **Settings**). Besides `/analyze`, `/benchmark/run`, `/ablation/run`, KEGG and NCBI, the backend serves `/analysis/history`, `/temporal/analyze`, `/msms/analyze` (mzML, mzXML, MGF, MSP, CSV/TXT) and `/report/generate` (PDF). Analyses are kept in `backend/data/` (git-ignored).
